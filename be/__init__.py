@@ -6,21 +6,33 @@ from matplotlib import pyplot as plt
 import os
 import random
 import math
+import numpy as np 
 
 from mnist import MNIST
 
-def extract(data_root, Testing=False):
+
+def MNIST_extract(data_root, Testing=False):
     mndata = MNIST(data_root)
     images, labels = mndata.load_training() if not Testing else mndata.load_testing()
     return mndata, images, labels
 
-def print_mndata_digit(index):
-    print(mndata.display(images[index]))
-    size = math.sqrt(len(images[index]))
-    print(f"Label = {labels[index]}\tSize = {int(size)} x {int(size)}")
+
+def print_MNIST_digit(index):
+    img = images[index]
+    print(mndata.display(img))
+    size = int(math.sqrt(len(img)))
+    print(f"Label = {labels[index]}\tSize = {size} x {size}")
+
+
+    for i in range(size):
+        line = ""
+        for j in range(size):
+            line += "\033[31m█\033[0m" if img[i*size + j] != 0 else "█" 
+        print(line)
 
 def train(images, labels):
-    pass
+    print("\n------------------- TRAINING -------------------\n")
+
 
 if __name__ == '__main__':
 
@@ -29,8 +41,8 @@ if __name__ == '__main__':
     data_root = parentDir + "/data/"
     
     # Extract images and labels
-    mndata, images, labels = extract(data_root)
+    mndata, images, labels = MNIST_extract(data_root)
 
-    # Display in terminal
+    # Display individual digit in terminal
     index = random.randrange(0, len(images))
-    print_mndata_digit(index)
+    print_MNIST_digit(index)
