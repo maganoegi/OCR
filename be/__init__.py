@@ -9,15 +9,15 @@ import random
 import math
 import numpy as np 
 from PIL import Image, ImageFilter
-from mnist import MNIST
+# from mnist import MNIST
 
-from keras.datasets import mnist
-from keras.models import Sequential, load_model
-from keras.layers.core import Dense, Dropout, Activation
-from keras.utils import np_utils
+# from keras.datasets import mnist
+# from keras.models import Sequential, load_model
+# from keras.layers.core import Dense, Dropout, Activation
+# from keras.utils import np_utils
 
 THRESHOLD = 100 # grey
-SIZE = 28
+SIZE = 20
 
 
 def MNIST_extract(data_root, Testing=False):
@@ -27,7 +27,7 @@ def MNIST_extract(data_root, Testing=False):
 
 
 def clean_MNIST(line_img):
-    return [x if x > THRESHOLD else 0 for x in line_img]
+    return np.array([x if x > THRESHOLD else 0 for x in line_img])
 
 def print_MNIST_digit(line_img):
 
@@ -77,7 +77,7 @@ def train(images, labels):
 
     # training the model and saving metrics in history
     history = model.fit(X_train, Y_train,
-            batch_size=128, epochs=20,
+            batch_size=128, epochs=2,
             verbose=2,
             validation_data=(X_test, Y_test))
 
@@ -97,6 +97,7 @@ def train(images, labels):
 
     # load the model and create predictions on the test set
     mnist_model = load_model(model_path)
+    print(X_test[0])
     predicted_classes = mnist_model.predict_classes(X_test)
 
     # see which we predicted correctly and which not
@@ -107,7 +108,27 @@ def train(images, labels):
     print(len(incorrect_indices)," classified incorrectly")
 
 
-def MNIST_convert():
+    data = MNIST_convert()
+    data.astype('float32')
+    print(data)
+    data = data.reshape(1, 28, 28, 1)
+    data = data / 255
+
+    scores = mnist_model.predict(np.array(data))
+    number = 0
+    bestScore = -1
+    prediction = -1
+    for score in scores[0]:
+        if score > bestScore:
+            bestScore = score
+            prediction = number
+
+        number += 1
+
+    print(f"prediction = {prediction} \t winner = {bestScore}")
+
+
+def treat_image():
 
     path = './test_input.png'
     im = Image.open(path).convert('L')
@@ -147,13 +168,13 @@ def MNIST_convert():
 if __name__ == '__main__':
 
     # Path to Data Directory
-    parentDir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    data_root = parentDir + "/data/"
+    # parentDir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    # data_root = parentDir + "/data/"
     
-    # Extract images and labels
-    mndata, images, labels = MNIST_extract(data_root)
+    # # Extract images and labels
+    # mndata, images, labels = MNIST_extract(data_root)
 
-    train(images, labels)
+    # train(images, labels)
 
 
     # Display individual digit in terminal
@@ -163,7 +184,7 @@ if __name__ == '__main__':
     # print_MNIST_digit(img)
 
     # Test MNIST conversion
-    # data = MNIST_convert()
+    data = MNIST_convert()
     # print_MNIST_digit(custom)
 
 
