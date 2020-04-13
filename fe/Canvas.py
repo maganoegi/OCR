@@ -11,20 +11,12 @@ import config
 import json
 
 
-SIZE = 20
-THRESHOLD = 5
-PENWIDTH = 15
-KERNELVAL = 2
-KSIZE = (KERNELVAL, KERNELVAL)
-DIMENSION = 500
-
-
 class Canvas(QLabel):
     def __init__(self):
         super().__init__()
         pixmap = QPixmap(500, 500)
         self.setPixmap(pixmap)
-        self.penWidth = PENWIDTH
+        self.penWidth = 15
         
         self.last_x, self.last_y = None, None
 
@@ -61,7 +53,7 @@ class Canvas(QLabel):
         self.update()
 
     def post_data(self):
-        text= "   7   "
+        text= "   2   "
         if text != None:
             label = text.strip()
 
@@ -75,8 +67,10 @@ class Canvas(QLabel):
 
 def post_pixmap(q_pixmap, mode, label):
     q_image = QPixmap.toImage(q_pixmap)
+    width = q_image.width()
+    height = q_image.height()
     depth = q_image.depth()
-    img_array = QImage_2_List(q_image, DIMENSION, DIMENSION, depth)
+    img_array = QImage_2_List(q_image, width, height, depth)
 
     content_type = 'image/jpeg'
     headers = {'content-type': content_type}

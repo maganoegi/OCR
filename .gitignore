@@ -6,3 +6,4 @@ be/results/*
 fe/Test.png
 __pycache__
 .vscode/
+*.png

@@ -2,13 +2,8 @@ import cv2
 import numpy as np
 from scipy import ndimage
 import os
+import lib.config as config
 
-
-SIZE = 20
-THRESHOLD = 5
-KERNELVAL = 2
-KSIZE = (KERNELVAL, KERNELVAL)
-DIMENSION = 500
 
 def getFileNumberName(path):
     _root, _dirs, files = next(os.walk(path))
@@ -21,7 +16,7 @@ def append_to_dataset(img_array, label):
     this_dir = os.path.dirname(os.path.abspath(__file__))
     base_path = os.path.dirname(this_dir)
     labeled_path = os.path.join(base_path, "digits", label)
-    file_name = f"sample_{label}_{getFileNumberName(labeled_path)}{file_format}"
+    file_name = f"{getFileNumberName(labeled_path)}{file_format}"
 
     path = os.path.join(labeled_path, file_name)
 
@@ -36,11 +31,11 @@ def preprocess(img_array):
 
     stretched = stretch_image(inversed)
 
-    resized = cv2.resize(src = stretched, dsize = (SIZE, SIZE))
+    resized = cv2.resize(src = stretched, dsize = (config.SIZE, config.SIZE))
 
-    blurred = cv2.blur(resized, KSIZE)
+    blurred = cv2.blur(resized, config.KSIZE)
 
-    _ret, thresh = cv2.threshold(blurred, THRESHOLD, 255, cv2.THRESH_BINARY)
+    _ret, thresh = cv2.threshold(blurred, config.THRESHOLD, 255, cv2.THRESH_BINARY)
     
     # reverting for display purposes, for some reason it does not save correctly when inverted
     cv2.imwrite('processed_img.png', 255 - thresh) 
@@ -56,11 +51,11 @@ def stretch_image(img):
 
     src = np.array([tl, tr, br, bl], 'float32')
 
-    dst = np.array([[0,0], [DIMENSION-1,0], [DIMENSION-1,DIMENSION-1], [0,DIMENSION-1]], 'float32')
+    dst = np.array([[0,0], [config.DIMENSION-1,0], [config.DIMENSION-1,config.DIMENSION-1], [0,config.DIMENSION-1]], 'float32')
 
     M = cv2.getPerspectiveTransform(src, dst)
 
-    return cv2.warpPerspective(img, M, (DIMENSION, DIMENSION))
+    return cv2.warpPerspective(img, M, (config.DIMENSION, config.DIMENSION))
 
 
 def find_edges(img):
@@ -71,7 +66,7 @@ def find_edges(img):
 
 
 def scan_horizontal(img):
-    min_index = DIMENSION
+    min_index = config.DIMENSION
     left = 0
     for y in img:
         for index, x in enumerate(y):
@@ -94,11 +89,11 @@ def scan_horizontal(img):
     return left, right
 
 def scan_vertical(img):
-    min_index = DIMENSION
+    min_index = config.DIMENSION
     top = 0
-    for i in range(DIMENSION):
+    for i in range(config.DIMENSION):
         column = img[:, i]
-        for j in range(DIMENSION):
+        for j in range(config.DIMENSION):
             if column[j][0] > 0 and j < min_index:
                 min_index = j
                 top = j
@@ -106,9 +101,9 @@ def scan_vertical(img):
 
     max_index = 0
     bottom = 0
-    for i in range(DIMENSION):
+    for i in range(config.DIMENSION):
         column = img[:, i]
-        for j in range(DIMENSION):
+        for j in range(config.DIMENSION):
             if column[j][0] > 0 and j > max_index:
                 max_index = j
                 bottom = j
@@ -119,7 +114,7 @@ def scan_vertical(img):
 
 def center_image(img):
     cm = ndimage.measurements.center_of_mass(img)
-    delta_y = DIMENSION/2 - cm[0]
-    delta_x = DIMENSION/2 - cm[1]
+    delta_y = config.DIMENSION/2 - cm[0]
+    delta_x = config.DIMENSION/2 - cm[1]
     translation_matrix = np.float32([[1, 0, delta_x], [0, 1, delta_y]])
-    return cv2.warpAffine(img, translation_matrix, (DIMENSION, DIMENSION)) 
+    return cv2.warpAffine(img, translation_matrix, (config.DIMENSION, config.DIMENSION)) 

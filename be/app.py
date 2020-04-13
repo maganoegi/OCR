@@ -19,6 +19,8 @@ def process_image(mode, label):
 
     processed_image = preprocess(img)
 
+    print(type(processed_image))
+
     append_to_dataset(processed_image, label)
 
     response = {'message': 'image received. size={}x{}, label={}'.format(img.shape[1], img.shape[0], label)}
