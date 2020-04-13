@@ -4,10 +4,12 @@ from PyQt5.QtWidgets import QWidget, QMainWindow, QLabel, QApplication, QVBoxLay
 from PyQt5.QtGui import QPainter, QColor, QPen, QPixmap, QImage, QFont
 from PyQt5.QtCore import Qt, QSize
 import cv2
-from PIL import Image, ImageFilter
 import numpy as np
 from scipy import ndimage
-import subprocess
+import requests
+import config
+import json
+
 
 SIZE = 20
 THRESHOLD = 5
@@ -59,92 +61,33 @@ class Canvas(QLabel):
         self.update()
 
     def post_data(self):
-        pixmap = self.pixmap()
+        text= "   7   "
+        if text != None:
+            label = text.strip()
 
-        treated_image = preprocess(pixmap)
+            if label == "":
+                pass
+            else:
+                pixmap = self.pixmap()
+                mode = "train"
+                json_data = post_pixmap(pixmap, mode, label)
 
 
-def preprocess(q_pixmap):
+def post_pixmap(q_pixmap, mode, label):
     q_image = QPixmap.toImage(q_pixmap)
-
     depth = q_image.depth()
-
     img_array = QImage_2_List(q_image, DIMENSION, DIMENSION, depth)
 
-    inversed = 255 - img_array
+    content_type = 'image/jpeg'
+    headers = {'content-type': content_type}
+    path = "/".join([config.host_url, mode, label])
 
-    centered = center_image(inversed) 
-
-    print(find_scaling_factor(centered))
-
-    resized = cv2.resize(src = centered, dsize = (SIZE, SIZE))
-
-    blurred = cv2.blur(resized, KSIZE)
-
-    _ret, thresh = cv2.threshold(blurred, THRESHOLD, 255, cv2.THRESH_BINARY)
+    _, img_encoded = cv2.imencode('.jpg', img_array)
+    data = img_encoded.tostring()
+    response = requests.post(path, data=data, headers=headers)
     
-    # inverting for display purposes, for some reason it does not save correctly
-    cv2.imwrite('processed_img.png', 255 - thresh) 
+    print(json.loads(response.text))
 
-    return thresh
-
-def find_scaling_factor(img):
-    return scan_vertical(img)
-
-def scan_horizontal(img):
-    min_index = DIMENSION
-    left = 0
-    for y in img:
-        for index, x in enumerate(y):
-            
-            if x[0] > 0 and index < min_index:
-                min_index = index
-                left = index
-                break
-
-    max_index = 0
-    right = 0
-    for y in img:
-        for index in reversed(range(len(y))):
-            x = y[index]
-            if x[0] > 0 and index > max_index:
-                max_index = index
-                right = index
-                break
-
-    return left, right
-
-# def scan_vertical(img):
-#     min_index = DIMENSION
-#     left = 0
-#     for y in img:
-#         for index, x in enumerate(y):
-            
-#             if x[0] > 0 and index < min_index:
-#                 min_index = index
-#                 left = index
-#                 break
-
-#     max_index = 0
-#     right = 0
-#     for y in img:
-#         for index in reversed(range(len(y))):
-#             x = y[index]
-#             if x[0] > 0 and index > max_index:
-#                 max_index = index
-#                 right = index
-#                 break
-
-#     return left, right
-
-
-
-def center_image(img):
-    cm = ndimage.measurements.center_of_mass(img)
-    delta_y = DIMENSION/2 - cm[0]
-    delta_x = DIMENSION/2 - cm[1]
-    translation_matrix = np.float32([[1, 0, delta_x], [0, 1, delta_y]])
-    return cv2.warpAffine(img, translation_matrix, (DIMENSION, DIMENSION)) 
 
 def QImage_2_List(img, width, height, depth):
     img = img.convertToFormat(4)

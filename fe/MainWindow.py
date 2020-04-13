@@ -1,10 +1,11 @@
 
 
 import sys
-from PyQt5.QtWidgets import QWidget, QMainWindow, QLabel, QApplication, QVBoxLayout, QHBoxLayout, QPushButton, QSlider, QFileDialog
+from PyQt5.QtWidgets import QWidget, QMainWindow, QLabel, QApplication, QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QSlider, QFileDialog, QRadioButton, QLineEdit
 from PyQt5.QtGui import QPainter, QColor, QPen, QPixmap, QImage, QFont
 from PyQt5.QtCore import Qt, QSize
 from Canvas import Canvas
+import config
 
 class MainWindow(QMainWindow):
 
@@ -12,14 +13,28 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("OCR")
         self.canvas = Canvas()
-        # self.slider = QSlider(Qt.Horizontal)
+
         self.submitBtn = self.add_btn("Submit")
         self.resetBtn = self.add_btn("Erase")
+        
         self.labels = [self.add_lbl(str(i)) for i in range(10)]
         self.lbl_result = self.add_lbl("Result Test")
 
+        self.current_label_txtBox = QLineEdit()
+        self.current_label_txtBox.resize(30, 20)
+
+        self.trainRadioBtn = QRadioButton("Train")
+        self.trainRadioBtn.setChecked(True)
+        self.trainRadioBtn.mode = "train"
+        self.trainRadioBtn.toggled.connect(self.modeSelect)
+
+        self.testRadioBtn = QRadioButton("Test")
+        self.testRadioBtn.mode = "test"
+        self.testRadioBtn.toggled.connect(self.modeSelect)
+
         w = QWidget()
         l = QVBoxLayout()
+        l_grid = QGridLayout()
         l_container = QHBoxLayout()
         lhv = QVBoxLayout()
         lhvv = QVBoxLayout()
@@ -32,14 +47,17 @@ class MainWindow(QMainWindow):
 
         w.setLayout(l)
         l.addWidget(self.canvas)
-        # l.addWidget(self.slider)
+        lhv.addWidget(self.current_label_txtBox)
         lhv.addWidget(self.submitBtn)
         lhv.addWidget(self.resetBtn)
         for i in range(10):
             lhvv.addWidget(self.labels[i])
         lhh.addWidget(self.lbl_result)
 
+        l_grid.addWidget(self.trainRadioBtn, 0, 0)
+        l_grid.addWidget(self.testRadioBtn, 0, 1)
 
+        l.addLayout(l_grid)
         l.addLayout(l_container)
 
         palette = QHBoxLayout()
@@ -52,19 +70,17 @@ class MainWindow(QMainWindow):
         self.submitBtn.clicked.connect(self.canvas.post_data)
         self.resetBtn.clicked.connect(self.canvas.reset)
         
-        # self.slider.setMinimum(5)
-        # self.slider.setMaximum(35)
-        # self.slider.valueChanged.connect(self.updateThicknessVal)
-    
         for index, label in enumerate(self.labels):
             self.write_lbl_val(label, float(index + 1), index) 
         
         self.print_result_lbl(9, asPredicted=False)
+    
+    def modeSelect(self):
+        radioButton = self.sender()
+        if radioButton.isChecked():
+            config.mode = radioButton.mode
+            print(config.mode)
 
-
-    # def updateThicknessVal(self):
-    #     val = self.slider.value()
-    #     self.canvas.changePenWidth(val)
 
     def add_lbl(self, text):
         lbl = QLabel()
