@@ -12,7 +12,7 @@ def getFileNumberName(path):
 
 def append_to_dataset(img_array, label):
     file_format = ".png"
-
+    # TODO: CREATE FOLDERS IF NOT PRESENT!!!
     this_dir = os.path.dirname(os.path.abspath(__file__))
     base_path = os.path.dirname(this_dir)
     labeled_path = os.path.join(base_path, "digits", label)
