@@ -19,7 +19,6 @@ def process_image(mode, label):
 
     processed_image = preprocess(img)
 
-    print(type(processed_image))
 
     append_to_dataset(processed_image, label)
 
@@ -29,7 +28,7 @@ def process_image(mode, label):
     return Response(response=response_pickled, status=200, mimetype="application/json")
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=True, host="192.168.1.118", port=5000)
 
 
 
