@@ -6,7 +6,7 @@ matplotlib.use("Agg")
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
-from keras.models import Sequential
+from keras.models import Sequential, load_model
 from keras.layers.core import Dense
 from keras.optimizers import SGD
 from imutils import paths
@@ -28,6 +28,7 @@ if __name__ == "__main__":
     model_path = os.path.join(base_path, "model", "digit_nn.model")
     label_path = os.path.join(base_path, "model", "digit_nn_lb.pickle")
     plot_path = os.path.join(base_path, "model", "digit_nn_plot.png")
+    test_path = os.path.join(base_path, "test_images")
 
 
     # initialize the data and labels
@@ -71,7 +72,7 @@ if __name__ == "__main__":
 
     # define the 3072-1024-512-3 architecture using Keras
     model = Sequential()
-    model.add(Dense(1024, input_shape=(3072,), activation="sigmoid"))
+    model.add(Dense(1024, input_shape=(1200,), activation="sigmoid"))
     model.add(Dense(512, activation="sigmoid"))
     model.add(Dense(len(lb.classes_), activation="softmax"))
 
@@ -88,7 +89,7 @@ if __name__ == "__main__":
 
     # train the neural network
     H = model.fit(trainX, trainY, validation_data=(testX, testY),
-        epochs=EPOCHS, batch_size=32)
+        epochs=EPOCHS, batch_size=6)
 
     # evaluate the network
     print("[INFO] evaluating network...")
@@ -101,10 +102,10 @@ if __name__ == "__main__":
     plt.figure()
     plt.plot(N, H.history["loss"], label="train_loss")
     plt.plot(N, H.history["val_loss"], label="val_loss")
-    plt.plot(N, H.history["acc"], label="train_acc")
-    plt.plot(N, H.history["val_acc"], label="val_acc")
-    plt.title("Training Loss and Accuracy (Simple NN)")
-    plt.xlabel("Epoch #")
+    plt.plot(N, H.history["accuracy"], label="train_acc")
+    plt.plot(N, H.history["val_accuracy"], label="val_acc")
+    plt.title("Training Loss and Accuracy (Platonov OCR)")
+    plt.xlabel("Epoch")
     plt.ylabel("Loss/Accuracy")
     plt.legend()
     plt.savefig(plot_path)
@@ -115,3 +116,36 @@ if __name__ == "__main__":
     f = open(label_path, "wb")
     f.write(pickle.dumps(lb))
     f.close()
+
+    for index in range(10):
+
+        target_digit = str(index)
+        image_name = target_digit + ".png"
+        test_image_path = os.path.join(test_path, image_name)
+        image = cv2.imread(test_image_path).flatten()
+        image = image.reshape((1, image.shape[0]))
+        # output = image.copy()
+        # image = cv2.resize(image, (20, 20))
+        # scale the pixel values to [0, 1]
+        image = image.astype("float") / 255.0
+        # load the model and label binarizer
+        model = load_model(model_path)
+        lb = pickle.loads(open(label_path, "rb").read())
+        # make a prediction on the image
+        preds = model.predict(image)
+        # find the class label index with the largest corresponding
+        # probability
+        res = preds.argmax(axis=1)[0]
+        label = lb.classes_[res]
+        for i in range(10):
+            this_one = i == res
+            winner = res == int(target_digit)
+            color = ""
+            end = ""
+            if this_one:
+                end = "'\x1b[0m'"
+                color = '\x1b[6;30;42m' if winner else '\x1b[6;30;41m'
+                print(f"{i}:\t{color}{preds[0][i]}{end}")
+
+        print(f"Expected result: {target_digit}\tObtained result: {res}")
+        print("================================================================")

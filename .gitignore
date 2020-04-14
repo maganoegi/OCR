@@ -7,3 +7,4 @@ fe/Test.png
 __pycache__
 .vscode/
 *.png
+be/model
