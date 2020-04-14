@@ -78,7 +78,7 @@ if __name__ == "__main__":
 
     # initialize our initial learning rate and # of epochs to train for
     INIT_LR = 0.01
-    EPOCHS = 75
+    EPOCHS = 90 # 75 before
     # compile the model using SGD as our optimizer and categorical
     # cross-entropy loss (you'll want to use binary_crossentropy
     # for 2-class classification)
@@ -145,7 +145,7 @@ if __name__ == "__main__":
             if this_one:
                 end = "'\x1b[0m'"
                 color = '\x1b[6;30;42m' if winner else '\x1b[6;30;41m'
-                print(f"{i}:\t{color}{preds[0][i]}{end}")
+                print(f"{index}:\t{color}{preds[0][i]}{end}")
 
         print(f"Expected result: {target_digit}\tObtained result: {res}")
         print("================================================================")

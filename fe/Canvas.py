@@ -53,7 +53,7 @@ class Canvas(QLabel):
         self.update()
 
     def post_data(self):
-        text= "   5   "
+        text= "   9   "
         if text != None:
             label = text.strip()
 
