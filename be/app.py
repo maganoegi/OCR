@@ -9,22 +9,49 @@ from lib import *
 
 app = Flask(__name__)
 
-@app.route("/api/<mode>/<label>", methods=['POST'])
-def process_image(mode, label):
+
+@app.route("/api/train/<label>", methods=['POST'])
+def submit_2_dataset(label):
+    """ preprocesses the received image and classifies it """
     r = request
 
     data = np.fromstring(r.data, np.uint8)
 
-    img = cv2.imdecode(data, cv2.IMREAD_COLOR)
-
-    processed_image = preprocess(img)
+    processed_image = preprocess(data)
 
     append_to_dataset(processed_image, label)
 
-    response = {'message': 'image received. size={}x{}, label={}'.format(img.shape[1], img.shape[0], label)}
-    response_pickled = jsonpickle.encode(response)
+    response = jsonpickle.encode({'message': 'image received. size={}x{}, label={}'.format(processed_image.shape[1], processed_image.shape[0], label)})
 
-    return Response(response=response_pickled, status=200, mimetype="application/json")
+    print("image received...")
+
+    return Response(response=response, status=200, mimetype="application/json")
+
+
+@app.route("/api/train", methods=['POST'])
+def train():
+    """ starts the training procedure """
+    print("started training...")
+    response = jsonpickle.encode({'message': 'started training'})
+    return Response(response=response, status=200, mimetype="application/json")
+    # TODO: starts the training
+
+
+
+@app.route("/api/test", methods=['POST'])
+def evaluate():
+    r = request
+
+    data = np.fromstring(r.data, np.uint8)
+
+    processed_image = preprocess(data)
+
+    print("evaluating the image..")
+    response = jsonpickle.encode({'message': 'evaluating the image...'})
+    return Response(response=response, status=200, mimetype="application/json")
+    # TODO: evaluate the particular image and recover results
+
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

@@ -23,7 +23,9 @@ def append_to_dataset(img_array, label):
     cv2.imwrite(path, img_array)
 
 
-def preprocess(img_array):
+def preprocess(data):
+
+    img_array = cv2.imdecode(data, cv2.IMREAD_COLOR)
 
     inversed = 255 - img_array
 
