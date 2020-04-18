@@ -65,7 +65,35 @@ class MainWindow(QMainWindow):
         self.label_input.setFont(QFont(font, fontSize, fontWeight))
         self.label_input.setStyleSheet("QLineEdit {color: " + self.letterColor + "};")
         self.label_input.setFont(QFont(font, fontSize, fontWeight))
-        self.label_input.setFixedSize(QSize(elementWidth, elementHeight))
+        self.label_input.setFixedSize(QSize(elementWidth-200, elementHeight))
+
+        self.batch_input = QLineEdit(self)
+        self.batch_input.setText("6")
+        self.batch_input.setFont(QFont(font, fontSize, fontWeight))
+        self.batch_input.setStyleSheet("QLineEdit {color: " + self.letterColor + "};")
+        self.batch_input.setFont(QFont(font, fontSize, fontWeight))
+        self.batch_input.setFixedSize(QSize(elementWidth-200, elementHeight))
+
+        self.testP_input = QLineEdit(self)
+        self.testP_input.setText("0.25")
+        self.testP_input.setFont(QFont(font, fontSize, fontWeight))
+        self.testP_input.setStyleSheet("QLineEdit {color: " + self.letterColor + "};")
+        self.testP_input.setFont(QFont(font, fontSize, fontWeight))
+        self.testP_input.setFixedSize(QSize(elementWidth-200, elementHeight))
+
+        self.epochs_input = QLineEdit(self)
+        self.epochs_input.setText("90")
+        self.epochs_input.setFont(QFont(font, fontSize, fontWeight))
+        self.epochs_input.setStyleSheet("QLineEdit {color: " + self.letterColor + "};")
+        self.epochs_input.setFont(QFont(font, fontSize, fontWeight))
+        self.epochs_input.setFixedSize(QSize(elementWidth-200, elementHeight))
+
+        self.l2_input = QLineEdit(self)
+        self.l2_input.setText("512")
+        self.l2_input.setFont(QFont(font, fontSize, fontWeight))
+        self.l2_input.setStyleSheet("QLineEdit {color: " + self.letterColor + "};")
+        self.l2_input.setFont(QFont(font, fontSize, fontWeight))
+        self.l2_input.setFixedSize(QSize(elementWidth-200, elementHeight))
 
         self.score_labels = []
         for i in range(10):
@@ -96,10 +124,11 @@ class MainWindow(QMainWindow):
         self.main_container = QVBoxLayout()
         
         self.canvas_container = QHBoxLayout()
-        self.canvas_container.setAlignment(Qt.AlignHCenter)
+        # self.canvas_container.setAlignment(Qt.AlignHCenter)
+        self.variable_container = QVBoxLayout()
 
         self.radio_container = QHBoxLayout()
-        self.radio_container.setAlignment(Qt.AlignHCenter)
+        self.radio_container.setAlignment(Qt.AlignLeft)
 
         self.button_label_container = QHBoxLayout()
         self.button_label_container.setSpacing(30)
@@ -112,6 +141,10 @@ class MainWindow(QMainWindow):
 
         # ... fill them with widgets ...
         self.canvas_container.addWidget(self.canvas)
+        self.variable_container.addWidget(self.batch_input)
+        self.variable_container.addWidget(self.testP_input)
+        self.variable_container.addWidget(self.epochs_input)
+        self.variable_container.addWidget(self.l2_input)
         self.radio_container.addWidget(self.train_Rbutton)
         self.radio_container.addWidget(self.test_Rbutton)
 
@@ -129,6 +162,7 @@ class MainWindow(QMainWindow):
         self.w.setLayout(self.main_container)
 
         self.main_container.addLayout(self.canvas_container)
+        self.canvas_container.addLayout(self.variable_container)
         self.main_container.addLayout(self.radio_container)
         self.main_container.addLayout(self.button_label_container)
 
@@ -140,7 +174,14 @@ class MainWindow(QMainWindow):
         self.enable_UI_elements(False)
 
         mode = self.mode
+
+        batch = self.batch_input.text()
+        testP = self.testP_input.text()
+        epochs = self.epochs_input.text()
+        l2 = self.l2_input.text()
+
         content_type, headers, path = get_request_resources(mode)
+        path = "/".join([path, batch, testP, epochs, l2])
         data = ""
         response = requests.post(path, data=data, headers=headers)
 

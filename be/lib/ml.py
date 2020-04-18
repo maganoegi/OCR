@@ -27,7 +27,7 @@ label_path = os.path.join(base_path, "model", "digit_nn_lb.pickle")
 plot_path = os.path.join(base_path, "model", "digit_nn_plot.png")
 test_path = os.path.join(base_path, "test_images")
 
-def train_model():
+def train_model(batch, testP, epochs, l2):
         
     # initialize the data and labels
     data = []
@@ -56,7 +56,7 @@ def train_model():
     # partition the data into training and testing splits using 75% of
     # the data for training and the remaining 25% for testing
     (trainX, testX, trainY, testY) = train_test_split(data,
-        labels, test_size=0.25, random_state=42)
+        labels, test_size=testP, random_state=42)
 
     # convert the labels from integers to vectors (for 2-class, binary
     # classification you should use Keras' to_categorical function
@@ -70,12 +70,12 @@ def train_model():
     # define the 3072-1024-512-3 architecture using Keras
     model = Sequential()
     model.add(Dense(1024, input_shape=(1200,), activation="sigmoid"))
-    model.add(Dense(512, activation="sigmoid"))
+    model.add(Dense(l2, activation="sigmoid"))
     model.add(Dense(len(lb.classes_), activation="softmax"))
 
     # initialize our initial learning rate and # of epochs to train for
     INIT_LR = 0.01
-    EPOCHS = 90 # 75 before
+    EPOCHS = epochs # 75 before
     # compile the model using SGD as our optimizer and categorical
     # cross-entropy loss (you'll want to use binary_crossentropy
     # for 2-class classification)
@@ -85,7 +85,7 @@ def train_model():
 
     # train the neural network
     H = model.fit(trainX, trainY, validation_data=(testX, testY),
-        epochs=EPOCHS, batch_size=6)
+        epochs=EPOCHS, batch_size=batch)
 
     # evaluate the network
     predictions = model.predict(testX, batch_size=32)

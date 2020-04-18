@@ -27,11 +27,15 @@ def submit_2_dataset(label):
     return Response(response=response, status=200, mimetype="application/json")
 
 
-@app.route("/api/train", methods=['POST'])
-def train():
+@app.route("/api/train/<batch>/<testP>/<epochs>/<l2>", methods=['POST'])
+def train(batch, testP, epochs, l2):
     """ starts the training procedure """
+    batch = int(batch)
+    testP = float(testP)
+    epochs = int(epochs)
+    l2 = int(l2)
     
-    result_dict = train_model()
+    result_dict = train_model(batch, testP, epochs, l2)
 
     response = jsonpickle.encode(result_dict)
 
