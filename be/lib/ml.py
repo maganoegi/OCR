@@ -25,7 +25,6 @@ dataset_path = os.path.join(base_path, "digits")
 model_path = os.path.join(base_path, "model", "digit_nn.model")
 label_path = os.path.join(base_path, "model", "digit_nn_lb.pickle")
 plot_path = os.path.join(base_path, "model", "digit_nn_plot.png")
-test_path = os.path.join(base_path, "test_images")
 
 def train_model(batch, testP, epochs, l2) -> dict:
     """ trains the model based on saved images and FE variables """
@@ -34,7 +33,7 @@ def train_model(batch, testP, epochs, l2) -> dict:
     labels = []
     # shuffle the image paths
     imagePaths = sorted(list(paths.list_images(dataset_path)))
-    random.seed(42)
+
     random.shuffle(imagePaths)
     for imagePath in imagePaths:
         # flatten the image, and organize the data and labels
@@ -63,9 +62,9 @@ def train_model(batch, testP, epochs, l2) -> dict:
     init_learning_rate = 0.01
     # Stochastic gradient descent optimizer.
     opt = SGD(lr=init_learning_rate)
+
     # https://peltarion.com/knowledge-center/documentation/modeling-view/build-an-ai-model/loss-functions/categorical-crossentropy
-    model.compile(loss="categorical_crossentropy", optimizer=opt,
-        metrics=["accuracy"])
+    model.compile(loss="categorical_crossentropy", optimizer=opt, metrics=["accuracy"])
 
     # train the neural network using the train sub-dataset
     H = model.fit(trainX, trainY, validation_data=(testX, testY),epochs=epochs, batch_size=batch)
