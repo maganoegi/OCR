@@ -5,12 +5,14 @@ import os
 import lib.config as config
 
 
-def getFileNumberName(path):
+def getFileNumberName(path) -> int:
+    """ gives the number of files in said directory, helping with the naming """
     _root, _dirs, files = next(os.walk(path))
     return len(files)
 
 
-def append_to_dataset(img_array, label):
+def append_to_dataset(img_array, label) -> None:
+    """ classifies the image into the correct directory with the help of the label """
     file_format = ".png"
     # TODO: CREATE FOLDERS IF NOT PRESENT!!!
     this_dir = os.path.dirname(os.path.abspath(__file__))
@@ -23,7 +25,8 @@ def append_to_dataset(img_array, label):
     cv2.imwrite(path, img_array)
 
 
-def preprocess(data):
+def preprocess(data) -> list:
+    """ extracts the raw data received from the POST method, and preprocesses it: """
 
     img_array = cv2.imdecode(data, cv2.IMREAD_COLOR)
 
@@ -39,12 +42,10 @@ def preprocess(data):
 
     _ret, thresh = cv2.threshold(blurred, config.THRESHOLD, 255, cv2.THRESH_BINARY)
     
-    # reverting for display purposes, for some reason it does not save correctly when inverted
-    cv2.imwrite('processed_img.png', 255 - thresh) 
-
     return thresh
 
-def stretch_image(img):
+def stretch_image(img) -> list:
+    """ stretches the square filled by the image over the entire 20x20 surface """
     top, right, bottom, left = find_edges(img)
     tl = [left, top]
     tr = [right, top]
@@ -60,14 +61,16 @@ def stretch_image(img):
     return cv2.warpPerspective(img, M, (config.DIMENSION, config.DIMENSION))
 
 
-def find_edges(img):
+def find_edges(img) -> (int, int, int, int):
+    """ finds the x, y coordinates that form the enclosing rectangle """
     left, right = scan_horizontal(img)
     top, bottom = scan_vertical(img)
 
     return top, right, bottom, left
 
 
-def scan_horizontal(img):
+def scan_horizontal(img) -> (int, int):
+    """ finds the x extremities of the enclosing rectangle """
     min_index = config.DIMENSION
     left = 0
     for y in img:
@@ -90,7 +93,8 @@ def scan_horizontal(img):
 
     return left, right
 
-def scan_vertical(img):
+def scan_vertical(img) -> (int, int):
+    """ finds the y extremities of the enclosing rectangle """
     min_index = config.DIMENSION
     top = 0
     for i in range(config.DIMENSION):
@@ -114,7 +118,8 @@ def scan_vertical(img):
     return top, bottom
 
 
-def center_image(img):
+def center_image(img) -> list:
+    """ transforms the image such that the center of mass of the image is in the center """
     cm = ndimage.measurements.center_of_mass(img)
     delta_y = config.DIMENSION/2 - cm[0]
     delta_x = config.DIMENSION/2 - cm[1]

@@ -12,7 +12,7 @@ from lib.preprocessing import *
 app = Flask(__name__)
 
 @app.route("/api/train/<label>", methods=['POST'])
-def submit_2_dataset(label):
+def submit_2_dataset(label) -> Response:
     """ preprocesses the received image and classifies it """
 
     data = np.fromstring(request.data, np.uint8)
@@ -28,7 +28,7 @@ def submit_2_dataset(label):
 
 
 @app.route("/api/train/<batch>/<testP>/<epochs>/<l2>", methods=['POST'])
-def train(batch, testP, epochs, l2):
+def train(batch, testP, epochs, l2) -> Response:
     """ starts the training procedure """
     batch = int(batch)
     testP = float(testP)
@@ -44,7 +44,7 @@ def train(batch, testP, epochs, l2):
 
 
 @app.route("/api/test", methods=['POST'])
-def evaluate():
+def evaluate() -> Response:
     """ evaluate the image using the already saved model and labels """
     data = np.fromstring(request.data, np.uint8)
 

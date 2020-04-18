@@ -1,7 +1,7 @@
 
 
 import sys
-from PyQt5.QtWidgets import QWidget, QMessageBox, QGroupBox, QMainWindow, QLabel, QApplication, QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QSlider, QFileDialog, QRadioButton, QLineEdit
+from PyQt5.QtWidgets import QWidget, QGroupBox, QMessageBox, QGroupBox, QMainWindow, QLabel, QApplication, QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QSlider, QFileDialog, QRadioButton, QLineEdit
 from PyQt5.QtGui import QPainter, QColor, QPen, QPixmap, QImage, QFont
 from PyQt5.QtCore import Qt, QSize
 from Canvas import Canvas
@@ -24,13 +24,25 @@ class MainWindow(QMainWindow):
         self.setGeometry(left, top, width, height)
         self.setFixedSize(width, height)
 
+        self.batch = str(6)
+        self.testP = str(0.25)
+        self.epochs = str(40)
+        self.l2 = str(512)
+        
+        self.variable_values = [
+            self.batch,
+            self.testP,
+            self.epochs,
+            self.l2
+        ]
+
         self.init_UIElements()
         self.init_Layouts()
 
         self.mode = "train"
 
     def init_UIElements(self):
-
+        """ UI elements are initialized here, as well as their initial states """
         elementWidth = 400
         elementHeight = 40
         self.letterColor = "cornflowerblue"
@@ -65,35 +77,31 @@ class MainWindow(QMainWindow):
         self.label_input.setFont(QFont(font, fontSize, fontWeight))
         self.label_input.setStyleSheet("QLineEdit {color: " + self.letterColor + "};")
         self.label_input.setFont(QFont(font, fontSize, fontWeight))
-        self.label_input.setFixedSize(QSize(elementWidth-200, elementHeight))
+        self.label_input.setFixedSize(QSize(elementWidth, elementHeight))
+        self.label_input.setAlignment(Qt.AlignCenter)
+        self.label_input.setPlaceholderText("label here...")
 
-        self.batch_input = QLineEdit(self)
-        self.batch_input.setText("6")
-        self.batch_input.setFont(QFont(font, fontSize, fontWeight))
-        self.batch_input.setStyleSheet("QLineEdit {color: " + self.letterColor + "};")
-        self.batch_input.setFont(QFont(font, fontSize, fontWeight))
-        self.batch_input.setFixedSize(QSize(elementWidth-200, elementHeight))
+        self.variable_inputs = []
+        for i in range(4):
+            self.variable_inputs.append(QLineEdit(self))
+            self.variable_inputs[i].setText(self.variable_values[i])
+            self.variable_inputs[i].setFont(QFont(font, fontSize, fontWeight))
+            self.variable_inputs[i].setStyleSheet("QLineEdit {color: " + self.letterColor + "};")
+            self.variable_inputs[i].setFont(QFont(font, fontSize, fontWeight))
+            self.variable_inputs[i].setFixedSize(QSize(elementWidth-300, elementHeight))
+            self.variable_inputs[i].setAlignment(Qt.AlignCenter)
 
-        self.testP_input = QLineEdit(self)
-        self.testP_input.setText("0.25")
-        self.testP_input.setFont(QFont(font, fontSize, fontWeight))
-        self.testP_input.setStyleSheet("QLineEdit {color: " + self.letterColor + "};")
-        self.testP_input.setFont(QFont(font, fontSize, fontWeight))
-        self.testP_input.setFixedSize(QSize(elementWidth-200, elementHeight))
 
-        self.epochs_input = QLineEdit(self)
-        self.epochs_input.setText("90")
-        self.epochs_input.setFont(QFont(font, fontSize, fontWeight))
-        self.epochs_input.setStyleSheet("QLineEdit {color: " + self.letterColor + "};")
-        self.epochs_input.setFont(QFont(font, fontSize, fontWeight))
-        self.epochs_input.setFixedSize(QSize(elementWidth-200, elementHeight))
-
-        self.l2_input = QLineEdit(self)
-        self.l2_input.setText("512")
-        self.l2_input.setFont(QFont(font, fontSize, fontWeight))
-        self.l2_input.setStyleSheet("QLineEdit {color: " + self.letterColor + "};")
-        self.l2_input.setFont(QFont(font, fontSize, fontWeight))
-        self.l2_input.setFixedSize(QSize(elementWidth-200, elementHeight))
+        self.variable_labels = []
+        label_text = ["batch", "test %", "epochs", "l2"]
+        for i in range(4):
+            self.variable_labels.append(QLabel(self))
+            self.variable_labels[i].setText(label_text[i])
+            self.variable_labels[i].setFont(QFont(font, fontSize, fontWeight))
+            self.variable_labels[i].setStyleSheet("QLabel {color: " + self.letterColor + "};")
+            self.variable_labels[i].setFont(QFont(font, fontSize, fontWeight))
+            self.variable_labels[i].setFixedSize(QSize(elementWidth-280, elementHeight))
+            self.variable_labels[i].setAlignment(Qt.AlignCenter)
 
         self.score_labels = []
         for i in range(10):
@@ -118,13 +126,16 @@ class MainWindow(QMainWindow):
         
 
     def init_Layouts(self):
+        """ layouts are initialized here, as well as their contents """
         self.w = QWidget()
 
         # Define containers...
         self.main_container = QVBoxLayout()
         
         self.canvas_container = QHBoxLayout()
-        # self.canvas_container.setAlignment(Qt.AlignHCenter)
+
+        self.variable_label_container = QVBoxLayout()
+
         self.variable_container = QVBoxLayout()
 
         self.radio_container = QHBoxLayout()
@@ -132,19 +143,32 @@ class MainWindow(QMainWindow):
 
         self.button_label_container = QHBoxLayout()
         self.button_label_container.setSpacing(30)
-        self.button_label_container
 
         self.button_container = QVBoxLayout()
         self.label_container = QVBoxLayout()
         self.label_container.setSpacing(5)
 
+        group_style_string = "QGroupBox {border: 3px solid " + self.letterColor + "};"
+        self.button_grouper = QGroupBox()
+        self.button_grouper.setStyleSheet(group_style_string)
+        self.label_grouper = QGroupBox()
+        self.label_grouper.setStyleSheet(group_style_string)
+        self.variable_grouper = QGroupBox()
+        self.variable_grouper.setStyleSheet(group_style_string)
+        self.canvas_grouper = QGroupBox()
+        self.canvas_grouper.setStyleSheet(group_style_string)
+
 
         # ... fill them with widgets ...
+
         self.canvas_container.addWidget(self.canvas)
-        self.variable_container.addWidget(self.batch_input)
-        self.variable_container.addWidget(self.testP_input)
-        self.variable_container.addWidget(self.epochs_input)
-        self.variable_container.addWidget(self.l2_input)
+
+        for i in range(4):
+            self.variable_label_container.addWidget(self.variable_labels[i])
+
+        for i in range(4):
+            self.variable_container.addWidget(self.variable_inputs[i])
+
         self.radio_container.addWidget(self.train_Rbutton)
         self.radio_container.addWidget(self.test_Rbutton)
 
@@ -158,37 +182,47 @@ class MainWindow(QMainWindow):
 
 
         # ... and combine the containers
+        self.button_grouper.setLayout(self.button_label_container)
+        self.label_grouper.setLayout(self.label_container)
+        self.variable_grouper.setLayout(self.variable_label_container)
+        self.canvas_grouper.setLayout(self.canvas_container)
+
         self.setCentralWidget(self.w)
         self.w.setLayout(self.main_container)
 
-        self.main_container.addLayout(self.canvas_container)
+        self.main_container.addWidget(self.canvas_grouper)
+        self.canvas_container.addWidget(self.variable_grouper)
         self.canvas_container.addLayout(self.variable_container)
         self.main_container.addLayout(self.radio_container)
-        self.main_container.addLayout(self.button_label_container)
+        self.main_container.addWidget(self.button_grouper)
 
         self.button_label_container.addLayout(self.button_container)
-        self.button_label_container.addLayout(self.label_container)
+        self.button_label_container.addWidget(self.label_grouper)
 
     def fit_clicked(self):
         """ sends a signal to the BE that triggers a training procedure """
-        self.enable_UI_elements(False)
-
         mode = self.mode
 
-        batch = self.batch_input.text()
-        testP = self.testP_input.text()
-        epochs = self.epochs_input.text()
-        l2 = self.l2_input.text()
+        batch = self.variable_inputs[0].text()
+        testP = self.variable_inputs[1].text()
+        epochs = self.variable_inputs[2].text()
+        l2 = self.variable_inputs[3].text()
 
-        content_type, headers, path = get_request_resources(mode)
-        path = "/".join([path, batch, testP, epochs, l2])
-        data = ""
-        response = requests.post(path, data=data, headers=headers)
+        if "" in [batch, testP, epochs, l2]:
+            showErrorMsg("Please fill give all control variables")
+        else:
+            self.enable_UI_elements(False)
+            content_type, headers, path = get_request_resources(mode)
+            path = "/".join([path, batch, testP, epochs, l2])
+            data = ""
 
-        if response.status_code == 200:
-            results = json.loads(response.text)
-            self.display_animated_results(results, "train")
-            self.enable_UI_elements(True)
+            try:
+                response = requests.post(path, data=data, headers=headers)
+                if response.status_code == 200:
+                    results = json.loads(response.text)
+                    self.display_results(results, "train")
+            finally:
+                self.enable_UI_elements(True)
 
 
     def erase_canvas(self):
@@ -210,40 +244,48 @@ class MainWindow(QMainWindow):
             _, img_encoded = cv2.imencode('.jpg', img_array)
             data = img_encoded.tostring()
 
-            response = requests.post(path, data=data, headers=headers)
-
-            if response.status_code == 200 and mode == "test":
-                results = json.loads(response.text)
-                self.display_animated_results(results, mode)
-            else:
-                self.canvas.reset()
-
-            self.enable_UI_elements(True)
+            try:
+                response = requests.post(path, data=data, headers=headers)
+                if response.status_code == 200 and mode == "test":
+                    results = json.loads(response.text)
+                    self.display_results(results, mode)
+                else:
+                    self.canvas.reset()
+            finally:
+                self.enable_UI_elements(True)
 
         else:
             showErrorMsg("Please label your data with single digits (0-9)!")
 
 
     def train_selected(self):
+        """ actions to perform when the train radiobutton is selected """
         self.mode = "train"
-
-        self.label_input.setVisible(True)
-        self.fit_button.setVisible(True)
+        self.show_control_elements(True)
 
     def test_selected(self):
+        """ actions to perform when the test radiobutton is selected """
         self.mode = "test"
-
-        self.label_input.setVisible(False)
-        self.fit_button.setVisible(False)
+        self.show_control_elements(False)
 
     def enable_UI_elements(self, val) -> None:
+        """ allows us to control the user interactions during BE thinking phases """
         self.erase_button.setEnabled(val)
         self.fit_button.setEnabled(val)
         self.submit_button.setEnabled(val)
         self.label_input.setEnabled(val)
         self.canvas.setEnabled(val)
 
-    def display_animated_results(self, results_dict, mode) -> None:
+    def show_control_elements(self, val) -> None:
+        self.label_input.setVisible(val)
+        self.fit_button.setVisible(val)
+        for i in range(4):
+            self.variable_labels[i].setVisible(val)
+            self.variable_inputs[i].setVisible(val)
+
+
+
+    def display_results(self, results_dict, mode) -> None:
         highest_score = None if mode == 'train' else max(results_dict, key=results_dict.get)
         for i in range(10):
             self.score_labels[i].setStyleSheet("QLabel {color: " + self.letterColor + "};")
@@ -285,6 +327,7 @@ def get_image_array(q_pixmap) -> list:
 
 
 def get_request_resources(mode, label=None) -> (str, dict, str):
+    """ assembles the API path string depending on mode and label variables """
     content_type = 'image/jpeg'
     headers = {'content-type': content_type}
     path = "/".join([config.host_url, mode])
