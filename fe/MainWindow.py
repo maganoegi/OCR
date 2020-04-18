@@ -1,10 +1,11 @@
 
 
 import sys
-from PyQt5.QtWidgets import QWidget, QGroupBox, QMainWindow, QLabel, QApplication, QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QSlider, QFileDialog, QRadioButton, QLineEdit
+from PyQt5.QtWidgets import QWidget, QMessageBox, QGroupBox, QMainWindow, QLabel, QApplication, QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, QSlider, QFileDialog, QRadioButton, QLineEdit
 from PyQt5.QtGui import QPainter, QColor, QPen, QPixmap, QImage, QFont
 from PyQt5.QtCore import Qt, QSize
 from Canvas import Canvas
+import time
 import requests
 import config
 import numpy as np
@@ -32,7 +33,7 @@ class MainWindow(QMainWindow):
 
         elementWidth = 400
         elementHeight = 40
-        letterColor = "cornflowerblue"
+        self.letterColor = "cornflowerblue"
         fontSize = 20
         font = "Roboto"
         fontWeight = QFont.Bold
@@ -43,26 +44,26 @@ class MainWindow(QMainWindow):
         self.fit_button.setText("fit") 
         self.fit_button.clicked.connect(self.fit_clicked)
         self.fit_button.setFixedSize(QSize(elementWidth, elementHeight))
-        self.fit_button.setStyleSheet("QPushButton {color: " + letterColor + "};")
+        self.fit_button.setStyleSheet("QPushButton {color: " + self.letterColor + "};")
         self.fit_button.setFont(QFont(font, fontSize, fontWeight))
 
         self.erase_button = QPushButton(self)
         self.erase_button.setText("erase") 
         self.erase_button.clicked.connect(self.erase_canvas)
         self.erase_button.setFixedSize(QSize(elementWidth, elementHeight))
-        self.erase_button.setStyleSheet("QPushButton {color: " + letterColor + "};")
+        self.erase_button.setStyleSheet("QPushButton {color: " + self.letterColor + "};")
         self.erase_button.setFont(QFont(font, fontSize, fontWeight))
 
         self.submit_button = QPushButton(self)
         self.submit_button.setText("submit") 
         self.submit_button.clicked.connect(self.submit_clicked)
         self.submit_button.setFixedSize(QSize(elementWidth, elementHeight))
-        self.submit_button.setStyleSheet("QPushButton {color: " + letterColor + "};")
+        self.submit_button.setStyleSheet("QPushButton {color: " + self.letterColor + "};")
         self.submit_button.setFont(QFont(font, fontSize, fontWeight))
 
         self.label_input = QLineEdit(self)
         self.label_input.setFont(QFont(font, fontSize, fontWeight))
-        self.label_input.setStyleSheet("QLineEdit {color: " + letterColor + "};")
+        self.label_input.setStyleSheet("QLineEdit {color: " + self.letterColor + "};")
         self.label_input.setFont(QFont(font, fontSize, fontWeight))
         self.label_input.setFixedSize(QSize(elementWidth, elementHeight))
 
@@ -70,7 +71,7 @@ class MainWindow(QMainWindow):
         for i in range(10):
             label = QLabel(self)
             label.setText(str(i))
-            label.setStyleSheet("QLabel {color: " + letterColor + "};")
+            label.setStyleSheet("QLabel {color: " + self.letterColor + "};")
             label.setFont(QFont(font, fontSize, fontWeight))
             self.score_labels.append(label)
 
@@ -78,13 +79,13 @@ class MainWindow(QMainWindow):
         self.train_Rbutton.setText("training")
         self.train_Rbutton.setChecked(True)
         self.train_Rbutton.toggled.connect(self.train_selected)
-        self.train_Rbutton.setStyleSheet("QRadioButton {color: " + letterColor + "};")
+        self.train_Rbutton.setStyleSheet("QRadioButton {color: " + self.letterColor + "};")
         self.train_Rbutton.setFont(QFont(font, 15, fontWeight))
 
         self.test_Rbutton = QRadioButton(self)
         self.test_Rbutton.setText("testing")
         self.test_Rbutton.toggled.connect(self.test_selected)
-        self.test_Rbutton.setStyleSheet("QRadioButton {color: " + letterColor + "};")
+        self.test_Rbutton.setStyleSheet("QRadioButton {color: " + self.letterColor + "};")
         self.test_Rbutton.setFont(QFont(font, 15, fontWeight))
         
 
@@ -136,13 +137,18 @@ class MainWindow(QMainWindow):
 
     def fit_clicked(self):
         """ sends a signal to the BE that triggers a training procedure """
+        self.enable_UI_elements(False)
+
         mode = self.mode
         content_type, headers, path = get_request_resources(mode)
         data = ""
         response = requests.post(path, data=data, headers=headers)
 
         if response.status_code == 200:
-            print(json.loads(response.text))
+            results = json.loads(response.text)
+            self.display_animated_results(results, "train")
+            self.enable_UI_elements(True)
+
 
     def erase_canvas(self):
         self.canvas.reset()
@@ -150,12 +156,14 @@ class MainWindow(QMainWindow):
     def submit_clicked(self):
         """ extracts data from the canvas and sends appropriate information to the BE """
         mode = self.mode
-        label = sanitize_input(self.label_input.text())
+        label = sanitize_input(self.label_input.text()) if mode == "train" else None
         content_type, headers, path = get_request_resources(mode, label)
 
         ok_to_send_img = (mode == 'train' and label != None) or mode == 'test'
 
         if ok_to_send_img:
+            self.enable_UI_elements(False)
+
             pixmap = self.canvas.pixmap()
             img_array = get_image_array(pixmap)
             _, img_encoded = cv2.imencode('.jpg', img_array)
@@ -163,26 +171,60 @@ class MainWindow(QMainWindow):
 
             response = requests.post(path, data=data, headers=headers)
 
-            if response.status_code == 200:
-                self.erase_canvas()
-                print(json.loads(response.text))
+            if response.status_code == 200 and mode == "test":
+                results = json.loads(response.text)
+                self.display_animated_results(results, mode)
+            else:
+                self.canvas.reset()
+
+            self.enable_UI_elements(True)
+
         else:
-            pass
-            # missing label input error
+            showErrorMsg("Please label your data with single digits (0-9)!")
 
 
     def train_selected(self):
         self.mode = "train"
 
-        self.label_input.setEnabled(True)
-        self.fit_button.setEnabled(True)
+        self.label_input.setVisible(True)
+        self.fit_button.setVisible(True)
 
     def test_selected(self):
         self.mode = "test"
 
-        self.label_input.setEnabled(False)
-        self.fit_button.setEnabled(False)
+        self.label_input.setVisible(False)
+        self.fit_button.setVisible(False)
 
+    def enable_UI_elements(self, val) -> None:
+        self.erase_button.setEnabled(val)
+        self.fit_button.setEnabled(val)
+        self.submit_button.setEnabled(val)
+        self.label_input.setEnabled(val)
+        self.canvas.setEnabled(val)
+
+    def display_animated_results(self, results_dict, mode) -> None:
+        highest_score = None if mode == 'train' else max(results_dict, key=results_dict.get)
+        for i in range(10):
+            self.score_labels[i].setStyleSheet("QLabel {color: " + self.letterColor + "};")
+            digit = str(i)
+            isHighest = digit == highest_score
+            val = float(results_dict[digit]['f1-score']) if mode == "train" else float(results_dict[str(i)])
+            multiplier = 15.0 if mode == "train" else 25.0
+            qty_bars = int(val*multiplier)
+            bars = str(i) + "   " +  "|" * qty_bars
+            self.score_labels[i].setText(bars)
+            if isHighest and mode != "train": self.score_labels[i].setStyleSheet("QLabel {color: green};")
+
+
+
+
+def showErrorMsg(text):
+    """ displays simple error window with custom text """
+    error_window = QMessageBox()
+    error_window.setIcon(QMessageBox.Critical)
+    error_window.setText(text)
+    error_window.setWindowTitle("Error")
+    error_window.exec_()
 
 
 def sanitize_input(text) -> str:
@@ -193,6 +235,7 @@ def sanitize_input(text) -> str:
 
 
 def get_image_array(q_pixmap) -> list:
+    """ extracts the pixel values from the QPixmap format and returns a numpy array """
     q_image = QPixmap.toImage(q_pixmap)
     width = q_image.width()
     height = q_image.height()
@@ -209,131 +252,12 @@ def get_request_resources(mode, label=None) -> (str, dict, str):
     return content_type, headers, path
 
 
-def QImage_2_List(img, width, height, depth):
+def QImage_2_List(img, width, height, depth) -> list:
+    """ converts QImage into a numpy array """
     img = img.convertToFormat(4)
 
     ptr = img.bits()
     ptr.setsize(img.byteCount())
 
     return np.array(ptr).reshape(height, width, depth//8)
-
-
-
-
-
-
-
-
-# def post_img(mode, label=None):
-
-#     content_type = 'image/jpeg'
-#     headers = {'content-type': content_type}
-#     path = "/".join([config.host_url, mode, label])
-
-#     _, img_encoded = cv2.imencode('.jpg', img_array)
-#     data = img_encoded.tostring()
-#     response = requests.post(path, data=data, headers=headers)
-    
-#     print(json.loads(response.text))
-
-
-    # def post_train_data(self):
-    # text= "   9   "
-    # if text != None:
-    #     label = text.strip()
-
-    #     if label == "":
-    #         pass
-    #     else:
-    #         pixmap = self.pixmap()
-    #         mode = "train"
-    #         json_data = post_pixmap(pixmap, mode, label)
-
-
-
-
-
-
-
-
-
-
-
-    # def __init__(self):
-
-    #     w = QWidget()
-    #     l = QVBoxLayout()
-    #     l_grid = QGridLayout()
-    #     l_container = QHBoxLayout()
-    #     lhv = QVBoxLayout()
-    #     lhvv = QVBoxLayout()
-    #     lhh = QHBoxLayout()
-    #     lhh = QVBoxLayout()
-
-    #     l_container.addLayout(lhv)
-    #     l_container.addLayout(lhvv)
-    #     l_container.addLayout(lhh)
-
-    #     w.setLayout(l)
-    #     l.addWidget(self.canvas)
-    #     lhv.addWidget(self.current_label_txtBox)
-    #     lhv.addWidget(self.submitBtn)
-    #     lhv.addWidget(self.resetBtn)
-    #     for i in range(10):
-    #         lhvv.addWidget(self.labels[i])
-    #     lhh.addWidget(self.lbl_result)
-
-    #     l_grid.addWidget(self.trainRadioBtn, 0, 0)
-    #     l_grid.addWidget(self.testRadioBtn, 0, 1)
-
-    #     l.addLayout(l_grid)
-    #     l.addLayout(l_container)
-
-    #     palette = QHBoxLayout()
-
-    #     l.addLayout(palette)
-    #     self.setStyleSheet("background-color: #123456;")  
-
-    #     self.setCentralWidget(w)
-
-    #     self.submitBtn.clicked.connect(self.canvas.post_data)
-    #     self.resetBtn.clicked.connect(self.canvas.reset)
-        
-    #     for index, label in enumerate(self.labels):
-    #         self.write_lbl_val(label, float(index + 1), index) 
-        
-    #     self.print_result_lbl(9, asPredicted=False)
-    
-    # def modeSelect(self):
-    #     radioButton = self.sender()
-    #     if radioButton.isChecked():
-    #         self.mode = radioButton.mode
-    #         print(self.mode)
-
-
-    # def add_lbl(self, text):
-    #     lbl = QLabel()
-    #     lbl.setText(text)
-    #     return lbl
-
-    # def add_btn(self, text):
-    #     btn = QPushButton()
-    #     btn.setText(text) 
-    #     return btn
-
-    # def write_lbl_val(self, label, val, index):
-    #     spaces = lambda x: " " * x
-    #     rounded_2_half = round(val * 2) / 2
-    #     increments = int(rounded_2_half / 0.5)
-    #     label.setText(spaces(6) + str(index) + spaces(2) + ("|" * int(increments)))
-
-    # def print_result_lbl(self, val, asPredicted):
-    #     red = 255 if asPredicted else 0
-    #     green = 0 if asPredicted else 255
-    #     self.lbl_result.setStyleSheet(f"color: rgb({red}, {green}, 0);")
-    #     self.lbl_result.setText(str(val))
-    #     self.lbl_result.setFont(QFont("Arial", 70, QFont.Bold))
-
-
-
 

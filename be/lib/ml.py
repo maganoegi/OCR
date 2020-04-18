@@ -3,6 +3,7 @@
 
 import matplotlib
 matplotlib.use("Agg")
+
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
@@ -18,21 +19,17 @@ import pickle
 import cv2
 import os
 
-if __name__ == "__main__":
+this_dir = os.path.dirname(os.path.abspath(__file__))
+base_path = os.path.dirname(this_dir)
+dataset_path = os.path.join(base_path, "digits")
+model_path = os.path.join(base_path, "model", "digit_nn.model")
+label_path = os.path.join(base_path, "model", "digit_nn_lb.pickle")
+plot_path = os.path.join(base_path, "model", "digit_nn_plot.png")
+test_path = os.path.join(base_path, "test_images")
+
+def train_model():
         
-    this_dir = os.path.dirname(os.path.abspath(__file__))
-    base_path = os.path.dirname(this_dir)
-
-
-    dataset_path = os.path.join(base_path, "digits")
-    model_path = os.path.join(base_path, "model", "digit_nn.model")
-    label_path = os.path.join(base_path, "model", "digit_nn_lb.pickle")
-    plot_path = os.path.join(base_path, "model", "digit_nn_plot.png")
-    test_path = os.path.join(base_path, "test_images")
-
-
     # initialize the data and labels
-    print("[INFO] loading images...")
     data = []
     labels = []
     # grab the image paths and randomly shuffle them
@@ -82,7 +79,6 @@ if __name__ == "__main__":
     # compile the model using SGD as our optimizer and categorical
     # cross-entropy loss (you'll want to use binary_crossentropy
     # for 2-class classification)
-    print("[INFO] training network...")
     opt = SGD(lr=INIT_LR)
     model.compile(loss="categorical_crossentropy", optimizer=opt,
         metrics=["accuracy"])
@@ -92,10 +88,7 @@ if __name__ == "__main__":
         epochs=EPOCHS, batch_size=6)
 
     # evaluate the network
-    print("[INFO] evaluating network...")
     predictions = model.predict(testX, batch_size=32)
-    print(classification_report(testY.argmax(axis=1),
-        predictions.argmax(axis=1), target_names=lb.classes_))
     # plot the training loss and accuracy
     N = np.arange(0, EPOCHS)
     plt.style.use("ggplot")
@@ -111,41 +104,29 @@ if __name__ == "__main__":
     plt.savefig(plot_path)
 
     # save the model and label binarizer to disk
-    print("[INFO] serializing network and label binarizer...")
     model.save(model_path)
     f = open(label_path, "wb")
     f.write(pickle.dumps(lb))
     f.close()
+    classification_dict = classification_report(testY.argmax(axis=1), predictions.argmax(axis=1), target_names=lb.classes_, output_dict=True)
+    
+    return classification_dict
 
-    for index in range(10):
+def evaluate_image(image):
 
-        target_digit = str(index)
-        image_name = target_digit + ".png"
-        test_image_path = os.path.join(test_path, image_name)
-        image = cv2.imread(test_image_path).flatten()
-        image = image.reshape((1, image.shape[0]))
-        # output = image.copy()
-        # image = cv2.resize(image, (20, 20))
-        # scale the pixel values to [0, 1]
-        image = image.astype("float") / 255.0
-        # load the model and label binarizer
-        model = load_model(model_path)
-        lb = pickle.loads(open(label_path, "rb").read())
-        # make a prediction on the image
-        preds = model.predict(image)
-        # find the class label index with the largest corresponding
-        # probability
-        res = preds.argmax(axis=1)[0]
-        label = lb.classes_[res]
-        for i in range(10):
-            this_one = i == res
-            winner = res == int(target_digit)
-            color = ""
-            end = ""
-            if this_one:
-                end = "'\x1b[0m'"
-                color = '\x1b[6;30;42m' if winner else '\x1b[6;30;41m'
-                print(f"{index}:\t{color}{preds[0][i]}{end}")
+    flattened = image.flatten()
+    reshaped = flattened.reshape((1, flattened.shape[0]))
+    # scale the pixel values to [0, 1]
+    image = reshaped.astype("float") / 255.0
+    # load the model and label binarizer
+    model = load_model(model_path)
+    lb = pickle.loads(open(label_path, "rb").read())
+    # make a prediction on the image
+    preds = model.predict(image)[0]
+    # find the class label index with the largest corresponding
+    # probability
+    # res = preds.argmax(axis=1)[0]
+    # label = lb.classes_[res]
+    result_dict = {str(index):str(val) for index, val in enumerate(preds)}
 
-        print(f"Expected result: {target_digit}\tObtained result: {res}")
-        print("================================================================")
+    return result_dict
