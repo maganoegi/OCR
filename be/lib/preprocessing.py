@@ -28,14 +28,13 @@ def append_to_dataset(img_array, label) -> None:
 def preprocess(data) -> list:
     """ extracts the raw data received from the POST method, and preprocesses it: """
 
-    img_array = cv2.imdecode(data, cv2.IMREAD_COLOR)
+    img_array = cv2.imdecode(data, cv2.IMREAD_GRAYSCALE)
 
     inversed = 255 - img_array
 
     centered = center_image(inversed) 
 
     stretched = stretch_image(inversed)
-
     resized = cv2.resize(src = stretched, dsize = (config.SIZE, config.SIZE))
 
     blurred = cv2.blur(resized, config.KSIZE)
@@ -76,7 +75,7 @@ def scan_horizontal(img) -> (int, int):
     for y in img:
         for index, x in enumerate(y):
             
-            if x[0] > 0 and index < min_index:
+            if x > 0 and index < min_index:
                 min_index = index
                 left = index
                 break
@@ -86,7 +85,7 @@ def scan_horizontal(img) -> (int, int):
     for y in img:
         for index in reversed(range(len(y))):
             x = y[index]
-            if x[0] > 0 and index > max_index:
+            if x > 0 and index > max_index:
                 max_index = index
                 right = index
                 break
@@ -100,7 +99,7 @@ def scan_vertical(img) -> (int, int):
     for i in range(config.DIMENSION):
         column = img[:, i]
         for j in range(config.DIMENSION):
-            if column[j][0] > 0 and j < min_index:
+            if column[j] > 0 and j < min_index:
                 min_index = j
                 top = j
                 break
@@ -110,7 +109,7 @@ def scan_vertical(img) -> (int, int):
     for i in range(config.DIMENSION):
         column = img[:, i]
         for j in range(config.DIMENSION):
-            if column[j][0] > 0 and j > max_index:
+            if column[j] > 0 and j > max_index:
                 max_index = j
                 bottom = j
                 break

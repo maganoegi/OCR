@@ -26,8 +26,8 @@ class MainWindow(QMainWindow):
 
         self.batch = str(6)
         self.testP = str(0.25)
-        self.epochs = str(40)
-        self.l2 = str(512)
+        self.epochs = str(80)
+        self.l2 = str(80)
         
         self.variable_values = [
             self.batch,

@@ -61,6 +61,11 @@ The route path strings are constructed in the FE, based on different criteria th
 The general idea behind the image analysis has been the following: an image needs to be collected, normalized (preprocessed) and classified before it can be used for training. The same steps apply for evaluation, minus the classification. Since this is my first experience in ML, I decided to leave the hyperparameters open for modification from the Front-End, allowing for experimentation and learning.
 
 #### Libraries
+* Keras for ANN
+* OpenCV for preprocessing
+* sklearn for dataset manipulations
+* imutils for experimentation with paths
+* matplotlib for plotting
 
 
 #### Image Preprocessing
@@ -73,7 +78,9 @@ In order to allow for handwitten digits coming from sources of different canvas 
 6. __binary thresholding__: the side-effect of blurring is that we find ourselves with a whole spectrum of grayscale values. Since we are only interested in pure black and white, we only select the regions that are "important" enough, and light them up, dimming the rest.
 
 Thus, we end up with our normalized image array.
-
+<img src="/be/digits/0/0.png"
+     alt="Markdown Monster icon"
+     style="width: 20%;margin-left: 30%" />
 
 #### Classification / Labeling
 Once our image is normalized, we then want to either insert it into our dataset, or to evaluate it. For evaluation, no classification is required. As for appending to the dataset, we need to label it correctly if we want to find it back afterwards. The label sent through the http request is a digit (0-9). We take our image, and insert it into the __digits__ directory, inside the corresponding sub-directory named the same as the label. As for the name generated: I decided to just name it after the number of elements already present in the sub-directory. The images are saved as in the __PNG__ format, and the __digits__ directory looks as following once it is filled:
@@ -105,5 +112,22 @@ digits/
 ```
 
 #### ANN Model
-As mentioned above
+In order to be able to play with the values, I decided to let the following hyperparameters be configurable from the FE:
+* batch size.
+* the size of the test set in % of the whole.
+* number of epochs.
+* the number of neurons in the middle layer.
+
+As a complement to that, I create and save a plot that describes the most important metrics of my model over the epochs. The trained model is saved, as well as the label data. This can be found in the __model__ directory.
+
+The model I use is __Sequential__, with all the layers __densely__ connected. The hidden layer has a __sigmoid activation__ function, as required for the __categorical crossentropy__ loss function in the end. The latter is used in problems that attribute one label and one label only to a given data item. Also, I use a __stochastic gradient descent__ optimizer (SGD), because I read that it boosts the higher values and lowers the lower ones. This seemed important as our dataset is very small (100 total samples), and we need all the accuracy we can get.
+
+
 #### Performance
+For the performance evaluation in the FE display, I decided to use the __f1__ metric, as it seemed more reliable for this context. Precision and Recall both rely on specific sensitivity on false negatives and positives, and f1 offers an "entre deux". 
+
+For each model build, we can consult the graph that shows us the performance of said training. The hyperparameters from FE are also listed in the title, allowing us to notice how those parameters affect the result.
+
+I don't feel confident enough yet to make an entire analysis of my model - it has been tuned and tested by hand every time. I did notice an interesting relationship between the __training loss__ and __evaluation loss__ curves: once they start diverging, we are at risk of overfitting. Sadly, this occurs often with my dataset, and I don't yet have enough theoretical knowledge on how to compensate for that adequately.
+
+![performance graph](/be/model/digit_nn_plot.png)

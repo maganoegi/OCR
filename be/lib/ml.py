@@ -13,7 +13,6 @@ from keras.optimizers import SGD
 from imutils import paths
 import matplotlib.pyplot as plt
 import numpy as np
-import argparse
 import random
 import pickle
 import cv2
@@ -37,7 +36,7 @@ def train_model(batch, testP, epochs, l2) -> dict:
     random.shuffle(imagePaths)
     for imagePath in imagePaths:
         # flatten the image, and organize the data and labels
-        image = cv2.imread(imagePath).flatten()
+        image = cv2.imread(imagePath, 0).flatten()
         data.append(image)
         label = imagePath.split(os.path.sep)[-2]
         labels.append(label)
@@ -47,16 +46,16 @@ def train_model(batch, testP, epochs, l2) -> dict:
     labels = np.array(labels)
 
     # split the dataset into training and testing parts by %
-    (trainX, testX, trainY, testY) = train_test_split(data, labels, test_size=testP, random_state=42)
+    (trainX, testX, trainY, testY) = train_test_split(data, labels, test_size=testP)
 
     # label classification -> makes it easier to work with and save the labels
     lb = LabelBinarizer()
     trainY = lb.fit_transform(trainY)
     testY = lb.transform(testY)
 
-    # the model used is 1200 x l2 x 10. l2 is given in FE
+    # the model used is 400 x l2 x 10. l2 is given in FE
     model = Sequential()
-    model.add(Dense(l2, input_shape=(1200,), activation="sigmoid"))
+    model.add(Dense(l2, input_shape=(400,), activation="sigmoid"))
     model.add(Dense(len(lb.classes_), activation="softmax"))
 
     init_learning_rate = 0.01
@@ -70,7 +69,7 @@ def train_model(batch, testP, epochs, l2) -> dict:
     H = model.fit(trainX, trainY, validation_data=(testX, testY),epochs=epochs, batch_size=batch)
 
     # evaluate the network using the test sub-dataset
-    predictions = model.predict(testX, batch_size=32)
+    predictions = model.predict(testX, batch_size=batch)
 
     # plot the training loss and accuracy
     N = np.arange(0, epochs)
