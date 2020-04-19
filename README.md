@@ -79,7 +79,7 @@ In order to allow for handwitten digits coming from sources of different canvas 
 
 Thus, we end up with our normalized image array.
 <img src="/be/digits/0/0.png"
-     alt="Markdown Monster icon"
+     alt="zero normalized"
      style="width: 20%;margin-left: 30%" />
 
 #### Classification / Labeling
