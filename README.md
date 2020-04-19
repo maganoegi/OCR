@@ -4,12 +4,12 @@ ___
 
 
 ## Setup
-
+Open two shell instances: OCR/fe and OCR/be. Then launch __python3 .__ on both. The files needed for classification shall be generated automatically, and you can start filling your dataset, training your model and evaluating in no time!
 
 ## Introduction
 The goal of this project is to create an application that allows for handwritten digit recognition. We have a certain liberty with the tools we use for communication and infrastructure, but we have to use Tensorflow Keras for the ANN modelisation.
 
-Below you will find an explanation on how the application is set up, and what choises have been made. I shall start with the general architecture of the app, followed by a part covering the ML components. 
+Below you will find an explanation on how the application is set up, and what choices have been made. I shall start with the general architecture of the app, followed by a part covering the ML components. 
 
 ## Architecture
 
@@ -128,6 +128,6 @@ For the performance evaluation in the FE display, I decided to use the __f1__ me
 
 For each model build, we can consult the graph that shows us the performance of said training. The hyperparameters from FE are also listed in the title, allowing us to notice how those parameters affect the result.
 
-I don't feel confident enough yet to make an entire analysis of my model - it has been tuned and tested by hand every time. I did notice an interesting relationship between the __training loss__ and __evaluation loss__ curves: once they start diverging, we are at risk of overfitting. Sadly, this occurs often with my dataset, and I don't yet have enough theoretical knowledge on how to compensate for that adequately.
+I don't feel confident enough yet to make an entire analysis of my model - it has been tuned and tested by hand every time. I did notice an interesting relationship between the __training loss__ and __evaluation loss__ curves: once they start diverging, we are at risk of overfitting. Sadly, this occurs often with my dataset, and I don't yet have enough theoretical knowledge on how to adequately compensate for that.
 
 ![performance graph](/be/model/digit_nn_plot.png)
